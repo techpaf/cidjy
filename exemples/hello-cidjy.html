@@ -37,6 +37,7 @@
 		var frame = 0;
 		var maxLink = 1000;
 		var links = [];
+		var frame = 0;
 
 		$(document).ready(function(){
 			init();
@@ -47,7 +48,7 @@
 			cg = new Cidjy( canvas );
 			cg.resize();	
 			cg.fullClear = false;
-			cg.clearColor = "rgba(0,0,0,0.1)";
+			cg.clearColor = "rgba(0,0,0,0.05)";
 
 			bindEvents();
 
@@ -64,14 +65,16 @@
 		}
 
 		function loop(){
+			frame++;
+
 			requestAnimationFrame( loop );
 
 			if( links.length < maxLink ){
 				var l = new Cidjy.Image('assets/img/link.png');
 				l.x = window.innerWidth/2;
 				l.y = window.innerHeight/2;
-				l.scaleX = 0.35;
-				l.scaleY = 0.35;
+				l.scaleX = 0.5;
+				l.scaleY = 0.5;
 				l.velX = ( Math.random() * 10 ) - 5;
 				l.velY = ( Math.random() * 10 ) - 5;
 				//l.scaleX = l.scaleY = 0.25 + Math.random()*0.75
@@ -83,7 +86,7 @@
 				var l = links[i];
 				l.x += l.velX;
 				l.y += l.velY;
-				//l.rotation += 1;
+				l.rotation += 1;
 
 				if( l.x > window.innerWidth || l.x < 0 || l.y > window.innerHeight || l.y < 0 ){
 					l.x = window.innerWidth/2;
