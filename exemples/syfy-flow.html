@@ -32,9 +32,9 @@
 	<!-- Exemple code -->
 	<script>
 		var canvas, cg;
-		var maxVel = 2;
-		var maxLink = 1000;
-		var links = [];
+		var maxVel = 7;
+		var maxDots = 250;
+		var dots = [];
 		var frame = 0;
 
 		$(document).ready(function(){
@@ -67,28 +67,23 @@
 
 			requestAnimationFrame( loop );
 
-			if( links.length < maxLink ){
-				var l = new Cidjy.Image('assets/img/link.png');
-				l.x = window.innerWidth/2;
-				l.y = window.innerHeight/2;
-				l.scaleX = 0.5;
-				l.scaleY = 0.5;
-				l.velX = ( Math.random() * 10 ) - 5;
-				l.velY = ( Math.random() * 10 ) - 5;
-				//l.scaleX = l.scaleY = 0.25 + Math.random()*0.75
-				cg.addChild( l );
-				links.push( l );
+			if( dots.length < maxDots ){
+				var d = new Cidjy.Circle(2);
+				d.fill = "#fff";
+				d.x = window.innerWidth * Math.random();
+				d.y = window.innerHeight * Math.random();
+				d.velX = Math.random() * maxVel;
+				cg.addChild( d );
+				dots.push( d );
 			}
 
-			for( var i = 0; i < links.length; i++ ){
-				var l = links[i];
-				l.x += l.velX;
-				l.y += l.velY;
-				l.rotation += 1;
+			for( var i = 0; i < dots.length; i++ ){
+				var d = dots[i];
+				d.x += d.velX;
 
-				if( l.x > window.innerWidth || l.x < 0 || l.y > window.innerHeight || l.y < 0 ){
-					l.x = window.innerWidth/2;
-					l.y = window.innerHeight/2;
+				if( d.x > window.innerWidth ){
+					d.x = -100;
+					d.y = window.innerHeight * Math.random();
 				}
 			}
 
