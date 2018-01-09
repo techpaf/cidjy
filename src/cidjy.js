@@ -13,6 +13,8 @@ var Cidjy = function( canvas ){
 	this.mouseStyle = true;
 	this.mouse = { 'x': undefined, 'y': undefined }
 	this.scaleRatio = 1;
+	this.fx = [];
+	this.snap = new Image();
 }
 
 Cidjy.prototype.enableMouse = function(){
@@ -244,6 +246,20 @@ Cidjy.prototype.render = function(){
 			}
 			else{
 				this.canvas.style.cursor = "default"
+			}
+		}
+	}
+
+	if( this.fx.length > 0 ){
+		for( var i = 0; i < this.fx.length; i++ ){
+			var cFx = this.fx[i];
+
+			if( cFx.name == 'mirrorX' ){
+				this.ctx.save();
+				this.ctx.translate(this.canvas.width/2, this.canvas.height/2);
+				this.ctx.rotate(180*Math.PI/180);
+				this.ctx.translate(-this.canvas.width/2, -this.canvas.height/2);
+				this.ctx.restore();
 			}
 		}
 	}
