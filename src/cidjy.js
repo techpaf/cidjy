@@ -14,7 +14,18 @@ var Cidjy = function( canvas ){
 	this.mouse = { 'x': undefined, 'y': undefined }
 	this.scaleRatio = 1;
 	this.fx = [];
-	this.snap = new Image();
+
+	this.snap = document.createElement('canvas');
+	this.snapCtx = this.snap.getContext('2d');
+	this.snap.id = "snap";
+	this.snap.width = this.canvas.width;
+	this.snap.height = this.canvas.height;
+	this.snap.style.zIndex = 90;
+	this.snap.style.borderColor = '#fff';
+	this.snap.style.borderSize = '3px';
+	this.snap.style.borderStyle = 'solid';
+
+	document.body.appendChild(this.snap);
 }
 
 Cidjy.prototype.enableMouse = function(){
@@ -68,9 +79,11 @@ Cidjy.prototype.resize = function( width, height ){
 
 	    this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 	}
+	else{
+		this.canvas.width = width;
+		this.canvas.height = height;
+	}
 
-	this.canvas.width = width;
-	this.canvas.height = height;
 }
 
 Cidjy.prototype.addChild = function( child ){
@@ -254,11 +267,26 @@ Cidjy.prototype.render = function(){
 		for( var i = 0; i < this.fx.length; i++ ){
 			var cFx = this.fx[i];
 
-			if( cFx.name == 'mirrorX' ){
+			if( cFx.name == 'repeatX' ){
 				this.ctx.save();
-				this.ctx.translate(this.canvas.width/2, this.canvas.height/2);
-				this.ctx.rotate(180*Math.PI/180);
+				var imgData = this.ctx.getImageData(0,0,this.canvas.width/cFx.times,this.canvas.height);
+				for( var j = 0; j < cFx.times; j++ ){
+					this.ctx.putImageData(imgData,this.canvas.width/cFx.times*j,0);
+				}
+				this.ctx.restore();
+			}
+
+			if( cFx.name == 'symmertyX' ){
+				this.ctx.save();
+				this.snapCtx.save();
+
+				this.snapCtx.scale(-1, 1);
+				this.snapCtx.drawImage(this.canvas,0,0,this.canvas.width,this.canvas.height);
+
 				this.ctx.translate(-this.canvas.width/2, -this.canvas.height/2);
+				this.ctx.drawImage(this.snap, this.canvas.width/2, 0);
+
+				this.snapCtx.restore();
 				this.ctx.restore();
 			}
 		}
