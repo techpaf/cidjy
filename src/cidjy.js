@@ -15,7 +15,7 @@ var Cidjy = function( canvas ){
 	this.scaleRatio = 1;
 	this.fx = [];
 
-	this.snap = document.createElement('canvas');
+	/*this.snap = document.createElement('canvas');
 	this.snapCtx = this.snap.getContext('2d');
 	this.snap.id = "snap";
 	this.snap.width = this.canvas.width;
@@ -25,7 +25,7 @@ var Cidjy = function( canvas ){
 	this.snap.style.borderSize = '3px';
 	this.snap.style.borderStyle = 'solid';
 
-	document.body.appendChild(this.snap);
+	document.body.appendChild(this.snap);*/
 }
 
 Cidjy.prototype.enableMouse = function(){
@@ -796,14 +796,17 @@ Cidjy.Group = function(){
 		'mouseout' : { 'fired': false, 'callback' : undefined },
 		'click' : { 'fired': false, 'callback' : undefined }
 	}
+	this.children = [];
 }
 
 Cidjy.Group.prototype.add = function( item ){
 	item.group = this;
+	this.children.push(item);
 }
 
 Cidjy.Group.prototype.remove = function( item ){
 	item.group = undefined;
+	this.children.slice(this.children.indexOf(item), 1);
 }
 
 
