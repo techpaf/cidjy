@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cg;
+		var frame = 0;
+
+		var dots = [];
+		var maxDots = 450;
+		var mouse = {
+			x: window.innerWidth/2,
+			y: window.innerWidth/2
+		}
+		var mouseInfluenceRadius = 1500;
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cg = new Cidjy( canvas );
+			cg.resize();	
+			cg.fullClear = false;
+			cg.clearColor = "rgba(21,25,57,0.025)";
+			cg.clearColor = "rgba(255,255,255,0.025)";
+			cg.clearColor = "rgba(152,205,255,0.025)";
+			cg.clearColor = "rgba(250,34,80,0.025)"; //Grenad
+			cg.clearColor = "rgba(0,87,230,0.025)"; // Electric blue
+
+			createDots(maxDots);
+			bindEvents();
+
+			$(window).trigger('resize');
+
+			loop();
+		}
+
+		function createDots(howMany){
+			for(var i = 0; i < howMany; i++){
+				//var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 100);
+				var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, window.innerWidth*0.075);
+				cg.addChild(d.gfx);
+				dots.push(d);
+			}
+		}
+
+		function bindEvents(){
+			$(window).resize(function(){
+				cg.resize(window.innerWidth, window.innerHeight);
+				
+				for( var i = 0; i < dots.length; i++ ){
+					var d = dots[i];
+					d.gfx.radius = window.innerWidth*0.075;
+				}
+			});
+
+			$(window).bind('mousemove', function(e){
+				mouse.x = e.offsetX;
+				mouse.y = e.offsetY;
+			});
+		}
+
+		function loop(){
+			frame++;
+
+			requestAnimationFrame(loop);
+
+			// if(dots.length < maxDots){
+			// 	//var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 100);
+			// 	var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, window.innerWidth*0.075);
+			// 	cg.addChild(d.gfx);
+			// 	dots.push(d);
+			// }
+
+			for( var i = 0; i < dots.length; i++ ){
+				var d = dots[i];
+				var dx = d.gfx.x - mouse.x;
+				var dy = d.gfx.y - mouse.y;
+				var angle = Math.atan2(dy,dx);
+				var distance = mouseInfluenceRadius/Math.sqrt(dx*dx + dy*dy);
+
+				d.gfx.x += Math.cos(angle)*distance*1.75;
+				d.gfx.y += Math.sin(angle)*distance*1.75;
+				d.gfx.x += (d.originalPosition.x - d.gfx.x)*0.05;
+				d.gfx.y += (d.originalPosition.y - d.gfx.y)*0.05;
+			}
+
+			cg.render();
+		}
+
+		// Dot Class
+		var Dot = function(x, y, radius){
+			this.originalPosition = {
+				x: x || Math.random()*window.innerWidth,
+				y: y || Math.random()*window.innerHeight
+			}
+			this.radius = radius || 5;
+			this.gfx = new Cidjy.Circle(this.radius);
+			this.gfx.fill = "#fff";
+			this.gfx.fill = "#ff4e00";
+			this.gfx.fill = "#fff";
+			this.gfx.fill = "#1a1a1a";
+			this.gfx.x = this.originalPosition.x;
+			this.gfx.y = this.originalPosition.y;
+		}
+	</script>
+</body>
+</html>
