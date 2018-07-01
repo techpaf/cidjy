@@ -35,12 +35,12 @@
 		var frame = 0;
 
 		var dots = [];
-		var maxDots = 450;
+		var maxDots = 999;
 		var mouse = {
 			x: window.innerWidth/2,
 			y: window.innerWidth/2
 		}
-		var mouseInfluenceRadius = 1500;
+		var mouseInfluenceRadius = 500;
 
 		$(document).ready(function(){
 			init();
@@ -51,11 +51,11 @@
 			cg = new Cidjy( canvas );
 			cg.resize();	
 			cg.fullClear = false;
-			cg.clearColor = "rgba(21,25,57,0.025)";
-			cg.clearColor = "rgba(255,255,255,0.025)";
-			cg.clearColor = "rgba(152,205,255,0.025)";
-			cg.clearColor = "rgba(250,34,80,0.025)"; //Grenad
-			cg.clearColor = "rgba(0,87,230,0.025)"; // Electric blue
+			cg.clearColor = "rgba(21,25,57,0.75)";
+			//cg.clearColor = "rgba(255,255,255,0.75)";
+			//cg.clearColor = "rgba(152,205,255,0.75)";
+			//cg.clearColor = "rgba(250,34,80,0.75)"; //Grenad
+			//cg.clearColor = "rgba(0,87,230,0.75)"; // Electric blue
 
 			createDots(maxDots);
 			bindEvents();
@@ -68,7 +68,7 @@
 		function createDots(howMany){
 			for(var i = 0; i < howMany; i++){
 				//var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 100);
-				var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, window.innerWidth*0.075);
+				var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 1);
 				cg.addChild(d.gfx);
 				dots.push(d);
 			}
@@ -78,10 +78,10 @@
 			$(window).resize(function(){
 				cg.resize(window.innerWidth, window.innerHeight);
 				
-				for( var i = 0; i < dots.length; i++ ){
-					var d = dots[i];
-					d.gfx.radius = window.innerWidth*0.075;
-				}
+				// for( var i = 0; i < dots.length; i++ ){
+				// 	var d = dots[i];
+				// 	d.gfx.radius = window.innerWidth*0.075;
+				// }
 			});
 
 			$(window).bind('mousemove', function(e){
@@ -127,10 +127,7 @@
 			this.radius = radius || 5;
 			this.gfx = new Cidjy.Circle(this.radius);
 			this.gfx.fill = "#fff";
-			this.gfx.fill = "#ff4e00";
-			this.gfx.fill = "#fff";
-			this.gfx.fill = "#1a1a1a";
-			this.gfx.fill = "#111";
+			this.gfx.opacity = Math.random()*0.75 + 0.25
 			this.gfx.x = this.originalPosition.x;
 			this.gfx.y = this.originalPosition.y;
 		}

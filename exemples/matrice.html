@@ -35,12 +35,16 @@
 		var frame = 0;
 
 		var dots = [];
-		var maxDots = 450;
+		var cols = 10;
+		var rows = 100;
+		var maxDots = 999;
 		var mouse = {
 			x: window.innerWidth/2,
 			y: window.innerWidth/2
 		}
-		var mouseInfluenceRadius = 1500;
+		var mouseInfluenceRadius = 1000;
+
+		var paths = [];
 
 		$(document).ready(function(){
 			init();
@@ -51,13 +55,13 @@
 			cg = new Cidjy( canvas );
 			cg.resize();	
 			cg.fullClear = false;
-			cg.clearColor = "rgba(21,25,57,0.025)";
-			cg.clearColor = "rgba(255,255,255,0.025)";
-			cg.clearColor = "rgba(152,205,255,0.025)";
-			cg.clearColor = "rgba(250,34,80,0.025)"; //Grenad
-			cg.clearColor = "rgba(0,87,230,0.025)"; // Electric blue
+			cg.clearColor = "rgba(21,25,57,0.75)";
+			//cg.clearColor = "rgba(255,255,255,0.75)";
+			//cg.clearColor = "rgba(152,205,255,0.75)";
+			//cg.clearColor = "rgba(250,34,80,0.75)"; //Grenad
+			cg.clearColor = "rgba(0,87,230,0.75)"; // Electric blue
 
-			createDots(maxDots);
+			createDotsAndPaths();
 			bindEvents();
 
 			$(window).trigger('resize');
@@ -65,12 +69,26 @@
 			loop();
 		}
 
-		function createDots(howMany){
-			for(var i = 0; i < howMany; i++){
-				//var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 100);
-				var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, window.innerWidth*0.075);
-				cg.addChild(d.gfx);
-				dots.push(d);
+		function createDotsAndPaths(){
+			for(var i = 0; i < rows+1; i++){
+				var pPoint = [];
+				for(var j = 0; j < cols+1; j++){
+					var d = new Dot((window.innerWidth/cols)*j, (window.innerHeight/rows)*i, 1);
+					d.row = i;
+					d.col = j;
+					//cg.addChild(d.gfx);
+					dots.push(d);
+
+					pPoint.push(new Cidjy.Point( (window.innerWidth/cols)*j, (window.innerHeight/rows)*i ));
+				}
+
+				p = new Cidjy.Path(pPoint);
+				p.stroke = "#ffffff";
+				p.opacity = 0.1;
+				p.smooth();
+				p.strokeWidth = 1;
+				cg.addChild(p);
+				paths.push(p);
 			}
 		}
 
@@ -80,7 +98,14 @@
 				
 				for( var i = 0; i < dots.length; i++ ){
 					var d = dots[i];
-					d.gfx.radius = window.innerWidth*0.075;
+					d.gfx.x = (window.innerWidth/cols)*d.col;
+					d.gfx.y = (window.innerHeight/rows)*d.row;
+					d.originalPosition.x = (window.innerWidth/cols)*d.col;
+					d.originalPosition.y = (window.innerHeight/rows)*d.row;
+				
+					var path = paths[Math.floor(i/(cols+1))];
+					path.points[i%(cols+1)].x = d.gfx.x;
+					path.points[i%(cols+1)].y = d.gfx.y;
 				}
 			});
 
@@ -95,13 +120,6 @@
 
 			requestAnimationFrame(loop);
 
-			// if(dots.length < maxDots){
-			// 	//var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 100);
-			// 	var d = new Dot(Math.random()*window.innerWidth, Math.random()*window.innerHeight, window.innerWidth*0.075);
-			// 	cg.addChild(d.gfx);
-			// 	dots.push(d);
-			// }
-
 			for( var i = 0; i < dots.length; i++ ){
 				var d = dots[i];
 				var dx = d.gfx.x - mouse.x;
@@ -113,6 +131,10 @@
 				d.gfx.y += Math.sin(angle)*distance*1.75;
 				d.gfx.x += (d.originalPosition.x - d.gfx.x)*0.05;
 				d.gfx.y += (d.originalPosition.y - d.gfx.y)*0.05;
+				
+				var path = paths[Math.floor(i/(cols+1))];
+				path.points[i%(cols+1)].x = d.gfx.x;
+				path.points[i%(cols+1)].y = d.gfx.y;
 			}
 
 			cg.render();
@@ -121,16 +143,13 @@
 		// Dot Class
 		var Dot = function(x, y, radius){
 			this.originalPosition = {
-				x: x || Math.random()*window.innerWidth,
-				y: y || Math.random()*window.innerHeight
+				x: x,
+				y: y
 			}
 			this.radius = radius || 5;
 			this.gfx = new Cidjy.Circle(this.radius);
+			this.gfx.opacity = 0;
 			this.gfx.fill = "#fff";
-			this.gfx.fill = "#ff4e00";
-			this.gfx.fill = "#fff";
-			this.gfx.fill = "#1a1a1a";
-			this.gfx.fill = "#111";
 			this.gfx.x = this.originalPosition.x;
 			this.gfx.y = this.originalPosition.y;
 		}
