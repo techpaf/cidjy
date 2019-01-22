@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cj;
+		var maxVel = 2;
+		var maxLink = 100;
+		var links = [];
+		var frame = 0;
+		var jumpHeight;
+
+		var keys = {
+			'up': false,
+			'right': false,
+			'down': false,
+			'left': false,
+			'space': false
+		}
+
+		var partyStarted = true;
+		var floor, hero;
+		var gravity = 0.75;
+		var friction = 0.92;
+		var walls = [];
+		var enemies = [];
+
+		var baseUnite;
+
+		$(document).ready(function(){
+			baseUnite = window.innerWidth/10;
+			jumpHeight = baseUnite*.9;
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cj = new Cidjy( canvas );	
+
+			startGame();
+			bindEvents();
+			loop();
+		}
+
+		function startGame(){
+			if(floor){
+				cj.removeChild(floor);
+			}
+			floor = new Cidjy.Rectangle(window.innerWidth, baseUnite);
+			floor.fill = "#000";
+			floor.x = window.innerWidth/2;
+			floor.y = window.innerHeight-baseUnite/2;
+			cj.addChild(floor);
+
+
+			if(walls.length > 0){
+				while(walls.length > 0){
+					cj.removeChild(walls[0]);
+					walls.shift();
+				}
+			}
+			for(var i = 0; i < 10; i++){
+				var wall = new Cidjy.Rectangle(baseUnite*5, baseUnite/2);
+
+				if(i%3 == 0){
+					wall.basefill = "#00F";
+					wall.destructible = true;
+					wall.life = 180;
+					wall.baseLife = 180;
+				}
+				else if(i%5 == 0){
+					wall.basefill = "#CF0";
+					wall.destructible = false;
+					wall.movable = true;
+					wall.offset = 0;
+					wall.maxOffset = Math.random()*50 + 25;
+					wall.velX = 2;
+				}
+				else{
+					wall.basefill = "#000";
+					wall.destructible = false;
+					wall.movable = false;
+				}
+
+				wall.fill = wall.basefill;
+				wall.baseX = window.innerWidth*Math.random();
+				wall.x = wall.baseX;
+				wall.y = floor.y - floor.height/2 - baseUnite*3*(i+1);
+				walls.push(wall);
+				cj.addChild(wall);
+			}
+
+
+			if(enemies.length > 0){
+				while(enemies.length > 0){
+					cj.removeChild(enemies[0]);
+					enemies.shift();
+				}
+			}
+			for(var i = 0; i < 3; i++){
+				var enemy = new Cidjy.Rectangle(baseUnite*0.8, baseUnite*0.8);
+
+				enemy.basefill = "#0F0";
+				enemy.destructible = true;
+				enemy.life = 100;
+				enemy.baseLife = 180;
+				enemy.fill = enemy.basefill;
+				enemy.anchorWall = walls[ Math.round( Math.random()*(walls.length-1) ) ];
+				enemy.x = enemy.anchorWall.x;
+				enemy.y = enemy.anchorWall.y - enemy.anchorWall.height/2 - enemy.height/2;
+				enemy.velX = 2;
+				enemy.offset = 0;
+				enemies.push(enemy);
+				cj.addChild(enemy);
+			}
+
+			if(hero){
+				cj.removeChild(hero);
+			}
+			hero = new Cidjy.Rectangle(baseUnite*0.8, baseUnite*0.8);
+			hero.fill = "#f00";
+			hero.x = window.innerWidth/2;
+			hero.y = floor.y - floor.height/2 - hero.height/2;
+			hero.jumping = true;
+			hero.velX = 0;
+			hero.velY = 0;
+			cj.addChild(hero);
+		}
+
+		function bindEvents(){
+			$(window).resize(function(){
+				// cj.resize(window.innerWidth, window.innerHeight);
+				cj.canvas.width = window.innerWidth;
+				cj.canvas.height = window.innerHeight;
+				console.log('resize')
+			});
+
+
+			$(window).trigger('resize');
+
+			$(window).bind('keydown', function(e){
+				console.log(e.keyCode);
+				var c = e.keyCode;
+				if(c == 32){
+					keys.space = true;
+				}
+				else if(c == 37){
+					keys.left = true;	
+				}
+				else if(c == 38){
+					keys.up = true;
+				}
+				else if(c == 39){
+					keys.right = true;
+				}
+				else if(c == 40){
+					keys.down = true;
+				}
+			});
+
+			$(window).bind('keyup', function(e){
+				console.log(e.keyCode);
+				var c = e.keyCode;
+				if(c == 32){
+					keys.space = false;
+				}
+				else if(c == 37){
+					keys.left = false;	
+				}
+				else if(c == 38){
+					keys.up = false;
+				}
+				else if(c == 39){
+					keys.right = false;
+				}
+				else if(c == 40){
+					keys.down = false;
+				}
+			});
+
+			if (window.DeviceOrientationEvent) {
+		   		window.addEventListener("deviceorientation", deviceOrientationListener);
+		   	}
+		}
+
+
+		function deviceOrientationListener(e){    
+			var gamma = e.gamma;
+			var beta = e.beta;
+			var alpha = e.alpha;
+
+			console.log(gamma);
+
+			if(gamma > 3){
+				hero.velX += .35;
+			}
+			else if(gamma <  -3){
+				hero.velX -= .35;
+			}
+		}
+
+		function loop(){
+			frame++;
+
+			requestAnimationFrame( loop );
+
+			if(partyStarted){
+				// if(keys.up && !hero.jumping || keys.space && !hero.jumping){
+				// 	hero.jumping = true;
+				// 	hero.velY -= jumpHeight;
+				// }
+
+				if(!hero.jumping){
+					hero.jumping = true;
+					hero.velY -= jumpHeight;
+				}
+
+				if(keys.left){
+					hero.velX -= .5;
+				}
+				if(keys.right){
+					hero.velX += .5;
+				}
+
+				hero.velY += gravity // Gravity
+				hero.x += hero.velX;
+				hero.y += hero.velY;
+
+				if(hero.x < 0){
+					hero.x = window.innerWidth;
+				}
+				else if(hero.x > window.innerWidth){
+					hero.x = 0;
+				}
+
+				if(hero.y > floor.y - floor.height/2 - hero.height /2){
+					hero.velY = 0;
+					hero.jumping = false;
+					hero.y = floor.y - floor.height/2 - hero.height /2;
+				}
+
+				if(hero.velY > 0){
+					for(var i = 0; i < walls.length; i++){
+						var w = walls[i];
+						if(hero.y < w.y && hero.x > w.x - w.width/2 && hero.x < w.x + w.width/2 && hero.y + hero.height / 2 > w.y - w.height/2 &&  + hero.height / 2 < w.y + w.height/2){
+
+							if(w.destructible && w.life > 0){
+								w.life--;
+								w.fill = "#f00";
+								w.opacity = w.life / w.baseLife;
+
+								hero.y = w.y - w.height/2 - hero.height / 2;
+								hero.velY = 0;
+								hero.jumping = false;
+							}
+							else if(!w.destructible){
+								w.fill = "#f00";
+
+								hero.y = w.y - w.height/2 - hero.height / 2;
+								hero.velY = 0;
+								hero.jumping = false;
+							}
+
+						}
+						else{
+							w.fill = w.basefill;
+						}
+					}
+				}
+
+				// Auto v scroll
+				// cj.children.forEach(function(element){
+				// 	element.y += 2;
+				// });
+
+				if(hero.y < window.innerHeight/2){
+					var hy = hero.y;
+					cj.children.forEach(function(element){
+						element.y += window.innerHeight/2 - hy
+					});
+				}
+				
+				walls.forEach(function(wall){
+					if(wall.y > window.innerHeight){
+						wall.x = window.innerWidth*Math.random();;
+						wall.y = walls[walls.length-1].y - baseUnite*3;
+						wall.life = 180;
+						wall.opacity = 1;
+						walls.push(walls.shift()); 
+					}
+
+					if(wall.movable){
+						wall.offset += wall.velX;
+
+						if(wall.offset > wall.maxOffset || wall.offset < -wall.maxOffset){
+							wall.velX = -wall.velX;
+						}
+						wall.x = wall.baseX + wall.offset;
+					}
+				});
+				
+				enemies.forEach(function(enemy){
+					enemy.offset += enemy.velX;
+					if(enemy.anchorWall.movable){
+						enemy.x = enemy.anchorWall.x + enemy.offset;
+
+						if(enemy.x > enemy.anchorWall.x + enemy.anchorWall.width/2 || enemy.x < enemy.anchorWall.x - enemy.anchorWall.width/2){
+							enemy.velX = -enemy.velX;
+						}
+					}
+					else{
+						enemy.x = enemy.anchorWall.x + enemy.offset;
+
+						if(enemy.x > enemy.anchorWall.x + enemy.anchorWall.width/2 || enemy.x < enemy.anchorWall.x - enemy.anchorWall.width/2){
+							enemy.velX = -enemy.velX;
+						}
+					}
+					enemy.y = enemy.anchorWall.y - enemy.anchorWall.height/2 - enemy.height/2 - 10;
+
+					if(enemy.y > window.innerHeight){
+						enemy.offset = 0;
+						enemy.x = enemy.anchorWall.x + enemy.offset;
+						enemy.y = enemy.anchorWall.y - enemy.anchorWall.height/2 - enemy.height/2 - 10;
+						enemy.life = 180;
+						enemies.push(enemies.shift()); 
+					}
+				});
+
+				hero.velX *= friction;
+				hero.velY *= friction;
+
+				if(hero.y + hero.height > window.innerHeight){
+					gameOver();
+				}
+			}
+
+			cj.render();
+		}
+
+		function gameOver(){
+			startGame();
+		}
+	</script>
+</body>
+</html>

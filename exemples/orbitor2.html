@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="assets/js/jquery-3.2.1.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cg;
+		var maxVel = 5;
+		var maxMainDots = 100;
+		var dots = [];
+		var frame = 0;
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cg = new Cidjy( canvas );
+			cg.resize();	
+			cg.fullClear = false;
+			cg.clearColor = "rgba(0,0,0,0.05)";
+
+			bindEvents();
+
+			$(window).trigger('resize');
+
+			// Create Main Dots
+			for(var i = 0; i < maxMainDots; i++){
+				createDot(); // Create 10 dots
+
+				// if(i%2 == 0){
+				// 	createDot(); // Even dots are free dots
+				// }
+				// else{
+				// 	createDot(dots.length);	
+				// }
+			}
+
+			// Create Sub Dots
+			for(var i = 0; i < maxMainDots; i++){
+				var folowers = Math.round( Math.random() * 10 ) + 2;
+				for(var j = 0; j < folowers; j++){
+					createDot(dots[i], j*10 + 10, j * 0);
+				}
+			}
+
+			loop();
+		}
+
+		function bindEvents(){
+			$( window ).resize(function(){
+				cg.resize(window.innerWidth, window.innerHeight);
+				console.log('resize')
+			});
+		}
+
+		function createDot(orbitingTarget, orbitingDistance, orbitingAngle){
+			var d = new Cidjy.Circle(1);
+			d.fill = "#fff";
+			d.x = window.innerWidth * Math.random();
+			d.y = window.innerHeight * Math.random();
+			d.velX = (Math.random() * maxVel * 2) - maxVel;
+			d.velY = (Math.random() * maxVel * 2) - maxVel;
+			d.isOrbiting = false;
+
+			if(orbitingTarget){
+				d.isOrbiting = true;
+				d.orbitingTarget = orbitingTarget;
+				d.orbitingDistance = orbitingDistance || 50;
+				d.orbitingAngle = orbitingAngle || 0;
+			}
+
+			cg.addChild(d);
+			dots.push(d);
+		}
+
+		function loop(){
+			frame++;
+
+			requestAnimationFrame( loop );
+
+			for( var i = 0; i < dots.length; i++ ){
+				var d = dots[i];
+				if(!d.isOrbiting){
+					// d.x += d.velX;
+					// d.y += d.velY;
+
+					// if(d.x < 0 || d.x > window.innerWidth){
+					// 	d.velX = -d.velX;
+					// }
+					// if(d.y < 0 || d.y > window.innerHeight){
+					// 	d.velY = -d.velY;
+					// }
+					d.x += d.velX;
+					d.y += d.velY;
+
+					if(d.x < 0){
+						d.x = window.innerWidth;
+					}
+					else if(d.x > window.innerWidth){
+						d.x = 0;
+					}
+					if(d.y < 0){
+						d.y = window.innerHeight;
+					}
+					else if(d.y > window.innerHeight){
+						d.y = 0;
+					}
+				}
+				else{
+					d.orbitingAngle+=Math.random()*10 - 5;
+					d.x = d.orbitingTarget.x + Math.cos(toRadians(d.orbitingAngle)) * d.orbitingDistance;
+					d.y = d.orbitingTarget.y + Math.sin(toRadians(d.orbitingAngle)) * d.orbitingDistance;
+				}
+			}
+
+			cg.render();
+		}
+
+		function toRadians(degree){
+			return degree * (Math.PI / 180);
+		}
+	</script>
+</body>
+</html>

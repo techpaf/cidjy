@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+			background: #fff;
+			/*background: #000;*/
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			/*position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);*/
+		}
+		img{
+			display: block;
+		}
+
+		img:first-child{
+			margin-top: 100vh;
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="assets/js/jquery-3.2.1.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cg;
+		var maxMainDots = 500;
+		var orbitingDegreePerStep = 0.5;
+		var dots = [];
+		var frame = 0;
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cg = new Cidjy( canvas );
+			cg.resize();	
+			cg.fullClear = false;
+			cg.clearColor = "rgba(0,0,0,0)";
+			cg.clearColor = "rgba(0,0,0,0)";
+
+			bindEvents();
+
+			$(window).trigger('resize');
+
+			// Dots
+			for(var i = 0; i < maxMainDots; i++){
+				createDot({x: window.innerWidth/2, y: window.innerHeight/2}, Math.random() * window.innerHeight/3, Math.random()*360);
+			}
+
+			loop();
+		}
+
+		function bindEvents(){
+			$( window ).resize(function(){
+				cg.resize(window.innerWidth, window.innerHeight);
+				console.log('resize')
+			});
+		}
+
+		function createDot(orbitingTarget, orbitingDistance, orbitingAngle){
+			var d = new Cidjy.Circle(Math.random()*15);
+
+			if(dots.length%5 == 0){
+				d.fill = "#fff";
+			}
+			else if(dots.length%5 == 1){
+				d.fill = "#ccc";
+			}
+			else if(dots.length%5 == 2){
+				d.fill = "#999";
+			}
+			else if(dots.length%5 == 3){
+				d.fill = "#666";
+			}
+			else if(dots.length%5 == 4){
+				d.fill = "#333";
+			}
+
+			if(dots.length%5 == 0){
+				d.fill = "#B61173";
+			}
+			else if(dots.length%5 == 1){
+				d.fill = "#E0335E";
+			}
+			else if(dots.length%5 == 2){
+				d.fill = "#EF6B30";
+			}
+			else if(dots.length%5 == 3){
+				d.fill = "#FF8100";
+			}
+			else if(dots.length%5 == 4){
+				d.fill = "#FF9800";
+			}
+
+			if(dots.length%5 == 0){
+				d.fill = "#010025";
+			}
+			else if(dots.length%5 == 1){
+				d.fill = "#010F3E";
+			}
+			else if(dots.length%5 == 2){
+				d.fill = "#002872";
+			}
+			else if(dots.length%5 == 3){
+				d.fill = "#0257C0";
+			}
+			else if(dots.length%5 == 4){
+				d.fill = "#05DBF0";
+			}
+
+			d.orbitingTarget = orbitingTarget;
+			d.orbitingDistance = orbitingDistance;
+			d.orbitingAngle = orbitingAngle;
+			d.orbitingAngle = 0;
+			d.baseVel = (Math.random() - 0.5) * 25;
+			d.vel = d.baseVel;
+
+			cg.addChild(d);
+			dots.push(d);
+		}
+
+		function loop(){
+			frame++;
+
+			requestAnimationFrame( loop );
+
+			for( var i = 0; i < dots.length; i++ ){
+				var d = dots[i];
+
+				d.vel = Math.cos(d.orbitingAngle) * d.baseVel;
+
+				d.orbitingAngle += orbitingDegreePerStep;
+				d.x = d.orbitingTarget.x + Math.cos(toRadians(d.orbitingAngle)) * (d.orbitingDistance+d.vel);
+				d.y = d.orbitingTarget.y + Math.sin(toRadians(d.orbitingAngle)) * (d.orbitingDistance+d.vel);
+
+				if(d.orbitingAngle >= 360){
+					if(i == 0){
+						$('body').append(cg.screenshot());
+						cg.forceClear();
+					}
+					d.orbitingAngle = d.orbitingAngle % 360;
+					d.orbitingDistance = Math.random() * window.innerHeight/3;
+				}
+			}
+
+			cg.render();
+		}
+
+		function toRadians(degree){
+			return degree * (Math.PI / 180);
+		}
+	</script>
+</body>
+</html>

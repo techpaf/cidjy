@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cj;
+		var maxVel = 2;
+		var maxLink = 100;
+		var links = [];
+		var frame = 0;
+
+		var keys = {
+			'up': false,
+			'right': false,
+			'down': false,
+			'left': false,
+			'space': false
+		}
+
+		var partyStarted = true;
+		var floor, hero;
+		var gravity = 1.5;
+		var friction = 0.95;
+		var walls = [];
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cj = new Cidjy( canvas );
+			cj.resize();	
+
+			createUnivers();
+
+			bindEvents();
+
+			$(window).trigger('resize');
+
+			loop();
+		}
+
+		function createUnivers(){
+			floor = new Cidjy.Rectangle(window.innerWidth, 100);
+			floor.fill = "#000";
+			floor.x = window.innerWidth/2;
+			floor.y = window.innerHeight-50;
+			cj.addChild(floor);
+
+			var wall = new Cidjy.Rectangle(300, 24);
+			wall.fill = "#000";
+			wall.x = window.innerWidth/2;
+			wall.y = floor.y - floor.height/2 - 150;
+			walls.push(wall);
+			cj.addChild(wall);
+
+			var wall = new Cidjy.Rectangle(300, 24);
+			wall.fill = "#000";
+			wall.x = window.innerWidth/2 + 200;
+			wall.y = floor.y - floor.height/2 - 250;
+			walls.push(wall);
+			cj.addChild(wall);
+
+			hero = new Cidjy.Rectangle(50, 50);
+			hero.fill = "#f00";
+			hero.x = window.innerWidth/2;
+			hero.y = window.innerHeight/2;
+			hero.jumping = true;
+			hero.velX = 0;
+			hero.velY = 0;
+			cj.addChild(hero);
+		}
+
+		function bindEvents(){
+			$(window).resize(function(){
+				cj.resize(window.innerWidth, window.innerHeight);
+				console.log('resize')
+			});
+
+			$(window).bind('keydown', function(e){
+				console.log(e.keyCode);
+				var c = e.keyCode;
+				if(c == 32){
+					keys.space = true;
+				}
+				else if(c == 37){
+					keys.left = true;	
+				}
+				else if(c == 38){
+					keys.up = true;
+				}
+				else if(c == 39){
+					keys.right = true;
+				}
+				else if(c == 40){
+					keys.down = true;
+				}
+			});
+
+			$(window).bind('keyup', function(e){
+				console.log(e.keyCode);
+				var c = e.keyCode;
+				if(c == 32){
+					keys.space = false;
+				}
+				else if(c == 37){
+					keys.left = false;	
+				}
+				else if(c == 38){
+					keys.up = false;
+				}
+				else if(c == 39){
+					keys.right = false;
+				}
+				else if(c == 40){
+					keys.down = false;
+				}
+			});
+		}
+
+		function loop(){
+			frame++;
+
+			requestAnimationFrame( loop );
+
+			if(partyStarted){
+				if(keys.up && !hero.jumping || keys.space && !hero.jumping){
+					hero.jumping = true;
+					hero.velY -= 30;
+				}
+				if(keys.left){
+					hero.velX -= .5;
+				}
+				if(keys.right){
+					hero.velX += .5;
+				}
+
+				hero.velY += gravity // Gravity
+				hero.x += hero.velX;
+				hero.y += hero.velY;
+
+				if(hero.x < 0){
+					hero.x = window.innerWidth;
+				}
+				else if(hero.x > window.innerWidth){
+					hero.x = 0;
+				}
+
+				if(hero.y > floor.y - floor.height/2 - hero.height /2){
+					hero.velY = 0;
+					hero.jumping = false;
+					hero.y = floor.y - floor.height/2 - hero.height /2;
+				}
+
+				if(hero.velY > 0){
+					for(var i = 0; i < walls.length; i++){
+						var w = walls[i];
+						if(hero.y < w.y && hero.x > w.x - w.width/2 && hero.x < w.x + w.width/2 && hero.y + hero.height / 2 > w.y - w.height/2 &&  + hero.height / 2 < w.y + w.height/2){
+							
+							hero.y = w.y - w.height/2 - hero.height / 2;
+							hero.velY = 0;
+							hero.jumping = false;
+
+							w.fill = "#f00";
+
+						}
+						else{
+							w.fill = "#000";
+						}
+					}
+				}
+
+				hero.velX *= friction;
+				hero.velY *= friction;
+			}
+
+			// if( links.length < maxLink ){
+			// 	var l = new Cidjy.Image('assets/img/link.png');
+			// 	l.x = window.innerWidth/2;
+			// 	l.y = window.innerHeight/2;
+			// 	l.scaleX = 0.5;
+			// 	l.scaleY = 0.5;
+			// 	l.velX = ( Math.random() * 10 ) - 5;
+			// 	l.velY = ( Math.random() * 10 ) - 5;
+			// 	//l.scaleX = l.scaleY = 0.25 + Math.random()*0.75
+			// 	cj.addChild( l );
+			// 	links.push( l );
+			// }
+
+			// for( var i = 0; i < links.length; i++ ){
+			// 	var l = links[i];
+			// 	l.x += l.velX;
+			// 	l.y += l.velY;
+			// 	l.rotation += 1;
+
+			// 	if( l.x > window.innerWidth || l.x < 0 || l.y > window.innerHeight || l.y < 0 ){
+			// 		l.x = window.innerWidth/2;
+			// 		l.y = window.innerHeight/2;
+			// 	}
+			// }
+
+			cj.render();
+		}
+	</script>
+</body>
+</html>
