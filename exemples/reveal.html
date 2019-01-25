@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+			background: #fff;
+			overflow: hidden;
+			overflow-y: auto;
+			/*background: #000;*/
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+		img{
+			display: block;
+		}
+
+		img:first-child{
+			margin-top: 100vh;
+		}
+
+		#lab{
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+	<div id="lab">
+		<img src="assets/img/dog.jpg" alt="" id="sourceImage">
+		<canvas id="backstage"></canvas>
+	</div>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="assets/js/jquery-3.2.1.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cg;
+		var maxDots = 250;
+		var dots = [];
+		var frame = 0;
+		var cBackstage, cCTX, backstageData;
+		var backstageReady = false;
+
+		$(document).ready(function(){
+			init();
+			initBackstage();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cg = new Cidjy( canvas );
+			cg.resize();	
+			cg.fullClear = false;
+			cg.clearColor = "rgba(0,0,0,0)";
+
+			bindEvents();
+
+			$(window).trigger('resize');
+
+			// Dots
+			// for(var i = 0; i < maxMainDots; i++){
+			// 	createDot({x: window.innerWidth/2, y: window.innerHeight/2}, Math.random() * window.innerHeight/3, Math.random()*360);
+			// }
+
+			loop();
+		}
+
+		function bindEvents(){
+			$( window ).resize(function(){
+				cg.resize(window.innerWidth, window.innerHeight);
+				console.log('resize')
+			});
+		}
+
+		function createDot(x, y){
+			var d = new Cidjy.Circle(Math.random()*15);
+			d.x = x;
+			d.y = y;
+			d.baseVel = (Math.random() - 0.5) * 3;
+			d.velX = (Math.random() - 0.5) * 3;
+			d.velY = (Math.random() - 0.5) * 3;
+			d.fill = getPixelColorToHex(d.x, d.y);
+
+			cg.addChild(d);
+			dots.push(d);
+		}
+
+		function loop(){
+			frame++;
+
+			requestAnimationFrame( loop );
+
+			if(backstageReady){
+
+				if(dots.length < maxDots){
+					createDot(Math.random() * window.innerWidth, Math.random() * window.innerHeight);
+				}
+
+				for( var i = 0; i < dots.length; i++ ){
+					var d = dots[i];
+
+					d.vel = d.baseVel;
+					d.x += d.velX;
+					d.y += d.velY;
+
+					d.fill = getPixelColorToHex(d.x, d.y);
+
+					if(d.x > window.innerWidth+50 || d.x < -50 || d.y > window.innerHeight+50 || d.y < -50){
+						d.x = Math.random() * window.innerWidth;
+						d.y = Math.random() * window.innerHeight;
+					}
+				}
+			}
+
+			cg.render();
+		}
+
+		function toRadians(degree){
+			return degree * (Math.PI / 180);
+		}
+
+		function initBackstage(){
+			var image = document.getElementById('sourceImage');
+			cBackstage = document.getElementById('backstage');
+			cCTX = cBackstage.getContext('2d');
+
+			drawImage(image);
+		}
+
+		function drawImage(image) {
+			// Set the canvas the same width and height of the image
+			cBackstage.width = canvas.width;
+			cBackstage.height = canvas.height;
+
+			cCTX.drawImage(image, 0, 0);
+			backstageReady = true;
+		}
+
+		function getBackstageData(){			
+			backstageData = cCTX.getImageData(0, 0, cBackstage.width, cBackstage.height);
+		}
+
+		function getPixelColor(x,y){			
+			return cCTX.getImageData(x, y, 1, 1);
+		}
+
+		function getPixelColorToHex(x,y){			
+			var pixelData = cCTX.getImageData(x, y, 1, 1).data;
+			return "#" + ("000000" + rgbToHex(pixelData[0], pixelData[1], pixelData[2])).slice(-6);
+		}
+
+		function rgbToHex(r, g, b) {
+		    if (r > 255 || g > 255 || b > 255)
+		        throw "Invalid color component";
+		    return ((r << 16) | (g << 8) | b).toString(16);
+		}
+	</script>
+</body>
+</html>
