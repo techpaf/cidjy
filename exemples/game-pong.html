@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+
+		#score{
+			position: absolute;
+			top: 50%;
+			left: 10px;
+			z-index: 50%;
+			width: 50px;
+			text-align: center;
+			font-family: sans-serif;
+		}
+
+		span.sep{
+			display: block;
+			height: 3px;
+			width: 100%;
+			background: #000;
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+	<div id="score">
+		<span class="bot"></span>
+		<span class="sep"></span>
+		<span class="player"></span>
+	</div>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cj;
+		var frame = 0;
+
+		var keys = {
+			'up': false,
+			'right': false,
+			'down': false,
+			'left': false,
+			'space': false
+		}
+
+		var partyStarted = false;
+		var player, bot, ball;
+		var mouse = { x: window.innerWidth / 2, y: window.innerHeight/2 }
+		var score = { player: 0, bot: 0 }
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cj = new Cidjy( canvas );
+			cj.resize();	
+
+			createUnivers();
+			updateScore();
+
+			bindEvents();
+
+			$(window).trigger('resize');
+
+			loop();
+		}
+
+		function createUnivers(){
+			player = new Cidjy.Rectangle(150, 10);
+			player.fill = "#000";
+			player.x = window.innerWidth/2;
+			player.y = window.innerHeight-50;
+			cj.addChild(player);
+
+			bot = new Cidjy.Rectangle(150, 10);
+			bot.fill = "#000";
+			bot.x = window.innerWidth/2;
+			bot.y = 50;
+			cj.addChild(bot);
+
+			ball = new Cidjy.Circle(5);
+			ball.fill = "#000";
+			ball.x = window.innerWidth / 2;
+			ball.y = window.innerHeight / 2;
+			ball.vel = { x: 0, y: -7 }
+			cj.addChild(ball);
+		}
+
+		function bindEvents(){
+			$(window).resize(function(){
+				cj.resize(window.innerWidth, window.innerHeight);
+				console.log('resize')
+			});
+
+			$(window).mousemove(function(e){
+				mouse.x = e.clientX;
+				mouse.y = e.clientY;
+			});
+
+			$(window).click(function(e){
+				if(!partyStarted){
+					frame = 0;
+					partyStarted = true;
+				}
+			});
+		}
+
+		function loop(){
+
+			requestAnimationFrame( loop );
+
+
+			player.x = mouse.x;
+
+			if(!partyStarted){
+				ball.x = player.x;
+				ball.y = player.y - 15;
+				ball.vel.x = 0;
+				ball.vel.y = -7;
+			}
+			else{
+				frame++;
+				ball.x += ball.vel.x;
+				ball.y += ball.vel.y;
+
+				bot.x += (ball.x - bot.x)*0.05;
+
+				if(ball.x < ball.radius || ball.x > window.innerWidth - ball.radius){
+					ball.vel.x = -ball.vel.x;
+				}
+
+				if(ball.y < ball.radius){
+					partyStarted = false;
+					score.player++;
+					updateScore();
+				}
+				if(ball.y > window.innerHeight - ball.radius){
+					partyStarted = false;
+					score.bot++;
+					updateScore();
+				}
+
+				if(collideRectCircle(ball, player)){
+					//console.log(player.x, ball.x, (player.x - ball.x) / (player.width/2) )
+					ball.vel.x = -5 * (player.x - ball.x) / (player.width/2);
+					ball.vel.y = -ball.vel.y;
+				}
+
+				if(collideRectCircle(ball, bot)){
+					ball.vel.x = -5 * (bot.x - ball.x) / (bot.width/2);
+					ball.vel.y = -ball.vel.y;
+				}
+
+				if(frame % 1000 == 0){
+					console.log('Pop bonus')
+				}
+			}
+
+			cj.render();
+		}
+
+		function collideRectCircle(circle, rect){
+			if(circle.x > rect.x - rect.width/2 && circle.x < rect.x + rect.width/2 ){
+				if(ball.y > rect.y - rect.height/2 && ball.y < rect.y + rect.height/2){
+					return true;
+				}
+				else{					
+					return false;
+				}
+			}
+			else{
+				return false;
+			}
+		}
+
+		function updateScore(){
+			$('#score .player').empty().text(score.player);
+			$('#score .bot').empty().text(score.bot);
+		}
+	</script>
+</body>
+</html>
