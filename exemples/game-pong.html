@@ -7,6 +7,7 @@
 		html, body{
 			margin: 0;
 			padding: 0;
+			background: #000;
 		}
 
 		*{
@@ -14,6 +15,10 @@
 		}
 
 		canvas{
+			background: #fff;
+		}
+
+		#wrapper{			
 			position: absolute;
 			top: 50%;
 			left: 50%;
@@ -40,11 +45,13 @@
 </head>
 <body>
 	<!-- The canvas we will draw on -->
-	<canvas id="cidjy"></canvas>
-	<div id="score">
-		<span class="bot"></span>
-		<span class="sep"></span>
-		<span class="player"></span>
+	<div id="wrapper">
+		<canvas id="cidjy"></canvas>
+		<div id="score">
+			<span class="bot"></span>
+			<span class="sep"></span>
+			<span class="player"></span>
+		</div>
 	</div>
 
 	<!-- Loading some libs & cidjy -->
@@ -55,6 +62,7 @@
 	<script>
 		var canvas, cj;
 		var frame = 0;
+		var gameSize = { w: 450, h: 700 }
 
 		var keys = {
 			'up': false,
@@ -65,9 +73,12 @@
 		}
 
 		var partyStarted = false;
+		var padBaseWidth = 150;
 		var player, bot, ball;
-		var mouse = { x: window.innerWidth / 2, y: window.innerHeight/2 }
+		var mouse = { x: gameSize.w / 2, y: gameSize.h/2 }
 		var score = { player: 0, bot: 0 }
+		var bonus = [];
+		var bonusColors = ["#f00", "#0f0", "#00f", "#000"];
 
 		$(document).ready(function(){
 			init();
@@ -89,38 +100,43 @@
 		}
 
 		function createUnivers(){
-			player = new Cidjy.Rectangle(150, 10);
+			player = new Cidjy.Rectangle(padBaseWidth, 10);
 			player.fill = "#000";
-			player.x = window.innerWidth/2;
-			player.y = window.innerHeight-50;
+			player.x = gameSize.w/2;
+			player.y = gameSize.h-50;
+			player.freezed = 0;
 			cj.addChild(player);
 
-			bot = new Cidjy.Rectangle(150, 10);
+			bot = new Cidjy.Rectangle(padBaseWidth, 10);
 			bot.fill = "#000";
-			bot.x = window.innerWidth/2;
+			bot.x = gameSize.w/2;
 			bot.y = 50;
+			bot.freezed = 0;
 			cj.addChild(bot);
 
 			ball = new Cidjy.Circle(5);
 			ball.fill = "#000";
-			ball.x = window.innerWidth / 2;
-			ball.y = window.innerHeight / 2;
-			ball.vel = { x: 0, y: -7 }
+			ball.x = gameSize.w / 2;
+			ball.y = gameSize.h / 2;
+			ball.vel = { x: 0, y: -7 };
+			ball.rebound = 0;
+			ball.lastHiter = player;
+			ball.cargo = "";
 			cj.addChild(ball);
 		}
 
 		function bindEvents(){
 			$(window).resize(function(){
-				cj.resize(window.innerWidth, window.innerHeight);
+				cj.resize(gameSize.w, gameSize.h);
 				console.log('resize')
 			});
 
-			$(window).mousemove(function(e){
-				mouse.x = e.clientX;
-				mouse.y = e.clientY;
+			$('canvas').mousemove(function(e){
+				mouse.x = e.offsetX;
+				mouse.y = e.offsetY;
 			});
 
-			$(window).click(function(e){
+			$('canvas').click(function(e){
 				if(!partyStarted){
 					frame = 0;
 					partyStarted = true;
@@ -132,23 +148,41 @@
 
 			requestAnimationFrame( loop );
 
-
-			player.x = mouse.x;
+			if(player.freezed == 0){
+				player.x = mouse.x;
+			}
+			else{
+				player.freezed--;
+			}
 
 			if(!partyStarted){
 				ball.x = player.x;
 				ball.y = player.y - 15;
 				ball.vel.x = 0;
 				ball.vel.y = -7;
+				ball.rebound = 0;
+				ball.lastHiter = player;
 			}
 			else{
 				frame++;
+
 				ball.x += ball.vel.x;
 				ball.y += ball.vel.y;
 
-				bot.x += (ball.x - bot.x)*0.05;
+				if(bot.freezed == 0){
+					bot.x += (ball.x - bot.x)*0.05;
+				}
+				else{
+					bot.freezed--;
+				}
 
-				if(ball.x < ball.radius || ball.x > window.innerWidth - ball.radius){
+				if(ball.x < ball.radius || ball.x > gameSize.w - ball.radius){
+					if(ball.x < ball.radius){
+						ball.x = ball.radius;
+					}
+					else if(ball.x > gameSize.w-ball.radius){
+						ball.x = gameSize.w-ball.radius;
+					}
 					ball.vel.x = -ball.vel.x;
 				}
 
@@ -157,25 +191,101 @@
 					score.player++;
 					updateScore();
 				}
-				if(ball.y > window.innerHeight - ball.radius){
+				if(ball.y > gameSize.h - ball.radius){
 					partyStarted = false;
 					score.bot++;
 					updateScore();
+				}
+
+				for(var i = 0; i < bonus.length; i++){
+					var b = bonus[i];
+					if(Math.abs(Cidjy.distanceBetween(ball, b)) < ball.radius + b.radius){
+						console.log(b.bonusType);
+						ball.lastHiter.fill = bonusColors[b.bonusType];
+						
+						if(b.bonusType == 0){
+							ball.lastHiter.width = padBaseWidth * .75;
+						}
+						else if(b.bonusType == 1){
+							ball.lastHiter.width = padBaseWidth * 1.25;
+						}
+						else if(b.bonusType == 2){
+							//ball.lastHiter.width = padBaseWidth * 1;
+							ball.cargo = "freezed";
+						}
+						else if(b.bonusType == 3){
+							ball.lastHiter.width = padBaseWidth * 2;
+						}
+
+						cj.removeChild(b);
+						bonus.splice(i,1);
+					}
 				}
 
 				if(collideRectCircle(ball, player)){
 					//console.log(player.x, ball.x, (player.x - ball.x) / (player.width/2) )
 					ball.vel.x = -5 * (player.x - ball.x) / (player.width/2);
 					ball.vel.y = -ball.vel.y;
+					ball.rebound++;
+					ball.lastHiter = player;
+
+					if(ball.cargo == "freezed"){
+						ball.lastHiter.freezed = 100;
+						ball.cargo = "";
+					}
+					
+					// if(ball.vel.y > 0){
+					// 	ball.vel.y += ball.rebound/100; 
+					// }
+					// else{						
+					// 	ball.vel.y -= ball.rebound/100;
+					// }
 				}
 
 				if(collideRectCircle(ball, bot)){
 					ball.vel.x = -5 * (bot.x - ball.x) / (bot.width/2);
 					ball.vel.y = -ball.vel.y;
+					ball.rebound++;
+					ball.lastHiter = bot;
+
+					if(ball.cargo == "freezed"){
+						ball.lastHiter.freezed = 100;
+						ball.cargo = "";
+					}
+					
+					// if(ball.vel.y > 0){
+					// 	ball.vel.y += ball.rebound/100; 
+					// }
+					// else{						
+					// 	ball.vel.y -= ball.rebound/100;
+					// }
 				}
 
-				if(frame % 1000 == 0){
+				if(frame % 100 == 0){
 					console.log('Pop bonus')
+					
+					var bonusType = Math.round(Math.random() * 3);
+					var b;
+
+					if(bonusType == 0){
+						b = new Cidjy.RegularPolygon(7, 3);
+					}
+					else if(bonusType == 1){
+						b = new Cidjy.RegularPolygon(7, 5);
+					}
+					else if(bonusType == 2){
+						b = new Cidjy.RegularPolygon(7, 7);
+					}
+					else if(bonusType == 3){
+						b = new Cidjy.RegularPolygon(7, 9);
+					}
+
+					b.bonusType = bonusType;
+					b.fill = bonusColors[b.bonusType];
+					b.x = (Math.random() * (gameSize.w - 100) ) + 50;
+					b.y = (Math.random() * (gameSize.h - 250) ) + 125;
+					bonus.push(b);
+					cj.addChild(b);
 				}
 			}
 
