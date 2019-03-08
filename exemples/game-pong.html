@@ -7,7 +7,7 @@
 		html, body{
 			margin: 0;
 			padding: 0;
-			background: #000;
+			background: #333;
 		}
 
 		*{
@@ -15,7 +15,7 @@
 		}
 
 		canvas{
-			background: #fff;
+			background: #000;
 		}
 
 		#wrapper{			
@@ -33,13 +33,14 @@
 			width: 50px;
 			text-align: center;
 			font-family: sans-serif;
+			color: #fff;
 		}
 
 		span.sep{
 			display: block;
 			height: 3px;
 			width: 100%;
-			background: #000;
+			background: #fff;
 		}
 	</style>
 </head>
@@ -56,6 +57,7 @@
 
 	<!-- Loading some libs & cidjy -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
 	<script src="../src/cidjy.js"></script>
 	
 	<!-- Exemple code -->
@@ -78,7 +80,9 @@
 		var mouse = { x: gameSize.w / 2, y: gameSize.h/2 }
 		var score = { player: 0, bot: 0 }
 		var bonus = [];
-		var bonusColors = ["#f00", "#0f0", "#00f", "#000"];
+		var bonusColors = ["#f00", "#0f0", "#00f", "#fff"];
+		var fxParts = [];
+		var fxTimeout;
 
 		$(document).ready(function(){
 			init();
@@ -87,6 +91,8 @@
 		function init(){			
 			canvas = $('#cidjy')[0];
 			cj = new Cidjy( canvas );
+			cj.fullClear = false;
+			cj.clearColor = "rgba(0,0,0,0.5)";
 			cj.resize();	
 
 			createUnivers();
@@ -101,21 +107,23 @@
 
 		function createUnivers(){
 			player = new Cidjy.Rectangle(padBaseWidth, 10);
-			player.fill = "#000";
+			player.fill = "#fff";
 			player.x = gameSize.w/2;
 			player.y = gameSize.h-50;
+			player.strokeWidth = 3;
 			player.freezed = 0;
 			cj.addChild(player);
 
 			bot = new Cidjy.Rectangle(padBaseWidth, 10);
-			bot.fill = "#000";
+			bot.fill = "#fff";
 			bot.x = gameSize.w/2;
 			bot.y = 50;
+			bot.strokeWidth = 3;
 			bot.freezed = 0;
 			cj.addChild(bot);
 
 			ball = new Cidjy.Circle(5);
-			ball.fill = "#000";
+			ball.fill = "#fff";
 			ball.x = gameSize.w / 2;
 			ball.y = gameSize.h / 2;
 			ball.vel = { x: 0, y: -7 };
@@ -150,6 +158,7 @@
 
 			if(player.freezed == 0){
 				player.x = mouse.x;
+				player.stroke = "#fff";
 			}
 			else{
 				player.freezed--;
@@ -171,6 +180,7 @@
 
 				if(bot.freezed == 0){
 					bot.x += (ball.x - bot.x)*0.05;
+					bot.stroke = "#fff";
 				}
 				else{
 					bot.freezed--;
@@ -196,12 +206,22 @@
 					score.bot++;
 					updateScore();
 				}
+				if(ball.pumped != 0){
+					ball.pumped--;
+				}
+				else{
+					ball.radius = 5;
+				}
 
 				for(var i = 0; i < bonus.length; i++){
 					var b = bonus[i];
+					b.rotation += 1;
+					b.scaleX = b.scaleY = 1 + Math.sin(frame/50 + i * 100)*.5;
+
 					if(Math.abs(Cidjy.distanceBetween(ball, b)) < ball.radius + b.radius){
 						console.log(b.bonusType);
-						ball.lastHiter.fill = bonusColors[b.bonusType];
+						ball.strokeWidth = 2;
+						//ball.lastHiter.fill = bonusColors[b.bonusType];
 						
 						if(b.bonusType == 0){
 							ball.lastHiter.width = padBaseWidth * .75;
@@ -212,9 +232,11 @@
 						else if(b.bonusType == 2){
 							//ball.lastHiter.width = padBaseWidth * 1;
 							ball.cargo = "freezed";
+							ball.stroke = bonusColors[b.bonusType];
 						}
 						else if(b.bonusType == 3){
-							ball.lastHiter.width = padBaseWidth * 2;
+							ball.radius = Math.round(Math.random() * 20)+5;
+							ball.pumped = 150;
 						}
 
 						cj.removeChild(b);
@@ -231,7 +253,9 @@
 
 					if(ball.cargo == "freezed"){
 						ball.lastHiter.freezed = 100;
+						ball.lastHiter.stroke = ball.stroke;
 						ball.cargo = "";
+						ball.stroke = "#fff";
 					}
 					
 					// if(ball.vel.y > 0){
@@ -250,7 +274,9 @@
 
 					if(ball.cargo == "freezed"){
 						ball.lastHiter.freezed = 100;
+						ball.lastHiter.stroke = ball.stroke;
 						ball.cargo = "";
+						ball.stroke = "#fff";
 					}
 					
 					// if(ball.vel.y > 0){
@@ -286,10 +312,56 @@
 					b.y = (Math.random() * (gameSize.h - 250) ) + 125;
 					bonus.push(b);
 					cj.addChild(b);
+
+					//blink(b.x, b.y, "#fff", 0);
 				}
 			}
 
 			cj.render();
+		}
+
+		function blink(x, y, color, delay){
+			clearTimeout(fxTimeout);
+			for( var i = 0; i < 8; i++ ){
+				var p = new Cidjy.Circle(1);
+				p.fill = color;
+				p.x = x;
+				p.y = y;
+				fxParts.push(p);
+				cj.addChild(p);
+
+				if(i == 0){
+					TweenMax.to(p, 0.15, { x: x, y: y-10, ease: Expo.easeOut, delay: delay });
+				}
+				else if(i == 1){
+					TweenMax.to(p, 0.15, { x: x+10, y: y, ease: Expo.easeOut, delay: delay });
+				}
+				else if(i == 2){
+					TweenMax.to(p, 0.15, { x: x, y: y+10, ease: Expo.easeOut, delay: delay });
+				}
+				else if(i == 3){
+					TweenMax.to(p, 0.15, { x: x-10, y: y, ease: Expo.easeOut, delay: delay });
+				}
+				else if(i == 4){
+					TweenMax.to(p, 0.15, { x: x+7, y: y+7, ease: Expo.easeOut, delay: delay });
+				}
+				else if(i == 5){
+					TweenMax.to(p, 0.15, { x: x+7, y: y-7, ease: Expo.easeOut, delay: delay });
+				}
+				else if(i == 6){
+					TweenMax.to(p, 0.15, { x: x-7, y: y-7, ease: Expo.easeOut, delay: delay });
+				}
+				else if(i == 7){
+					TweenMax.to(p, 0.15, { x: x-7, y: y+7, ease: Expo.easeOut, delay: delay });
+				}
+			}
+
+			fxTimeout = setTimeout(function(){
+				while(fxParts.length > 0){
+					cj.removeChild(fxParts[0]);
+					fxParts.shift();
+				}
+			}, 1500);
 		}
 
 		function collideRectCircle(circle, rect){
