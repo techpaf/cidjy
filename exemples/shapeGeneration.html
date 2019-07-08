@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cj;
+		var maxVel = 2;
+		var maxLink = 1000;
+		var links = [];
+		var frame = 0;
+		var p;
+		var pathPoints;
+		var brickSize = 32;
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cj = new Cidjy( canvas );
+			cj.resize();	
+			// cj.fullClear = false;
+			// cj.clearColor = "rgba(0,0,0,0.05)";
+
+			// pathPoints = [
+			// 	{x: 15, y: 0},
+			// 	{x: 135, y: 0},
+			// 	{x: 150, y: 15},
+			// 	{x: 135, y: 30},
+			// 	{x: 15, y: 30},
+			// 	{x: 0, y: 15}
+			// ];
+
+			// p = new Cidjy.Path(pathPoints);
+			// p.closed = true;
+			// p.fill = "#f00";
+			// p.tension = 0.3;
+			// p.smooth();
+			// cj.addChild(p);
+
+			// p.x = window.innerWidth/2;
+			// p.y = window.innerHeight/2;
+
+			bindEvents();
+
+			renderShape( generateShape() );
+
+			$(window).trigger('resize');
+
+			loop();
+		}
+
+		function bindEvents(){
+			$( window ).resize(function(){
+				cj.resize(window.innerWidth, window.innerHeight);
+				console.log('resize')
+			});
+		}
+
+		function generateShape(w, h){
+			var width = w || 9;
+			var height = h || 4;
+
+			var shape = [];
+
+			for(var i = 0; i < height; i++){
+				var rowLength = Math.round( Math.random() * width );
+				var r = { width: rowLength, offset: Math.round(Math.random() * (width-rowLength) ) };
+				shape.push(r);
+			}
+
+			console.log(shape);
+			return shape;
+		}
+
+		function renderShape(shape){
+			for(var i = 0; i < shape.length; i++){
+				var part = shape[i];
+				console.log(part);
+				if(part.width > 0){
+					var p = new Cidjy.Rectangle(part.width * brickSize, brickSize);
+					p.x = part.offset * brickSize + part.width*brickSize/2;
+					p.y = i * brickSize + brickSize/2;
+					p.fill = '#F00';
+					cj.addChild(p);
+				}
+			}
+		}
+
+		function loop(){
+			frame++;
+
+			requestAnimationFrame( loop );
+
+			cj.render();
+		}
+	</script>
+</body>
+</html>
