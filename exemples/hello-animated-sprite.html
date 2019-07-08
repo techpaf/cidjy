@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cg;
+		var maxVel = 2;
+		var maxLink = 3;
+		var links = [];
+		var frame = 0;
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cg = new Cidjy( canvas );
+			cg.resize();	
+			cg.fullClear = false;
+			cg.clearColor = "rgba(0,0,0,0.05)";
+
+			bindEvents();
+
+			$(window).trigger('resize');
+
+			loop();
+		}
+
+		function bindEvents(){
+			$( window ).resize(function(){
+				cg.resize(window.innerWidth, window.innerHeight);
+				console.log('resize')
+			});
+		}
+
+		function loop(){
+			frame++;
+
+			requestAnimationFrame( loop );
+
+			if( links.length < maxLink ){
+				var l = new Cidjy.Sprite('assets/img/link2.png', 62, 94, 2, 2, true);
+				l.x = window.innerWidth/2;
+				l.y = window.innerHeight/2;
+				l.scaleX = 0.5;
+				l.scaleY = 0.5;
+				l.velX = ( Math.random() * 10 ) - 5;
+				l.velY = ( Math.random() * 10 ) - 5;
+				//l.scaleX = l.scaleY = 0.25 + Math.random()*0.75
+				cg.addChild( l );
+				links.push( l );
+				l.play();
+			}
+
+			for( var i = 0; i < links.length; i++ ){
+				var l = links[i];
+				l.x = (window.innerWidth / links.length) * i + (window.innerWidth / links.length) / 2;
+				l.y = (window.innerHeight / 2);
+				l.rotation += 1;
+
+				if( l.x > window.innerWidth || l.x < 0 || l.y > window.innerHeight || l.y < 0 ){
+					l.x = window.innerWidth/2;
+					l.y = window.innerHeight/2;
+				}
+			}
+
+			cg.render();
+		}
+	</script>
+</body>
+</html>

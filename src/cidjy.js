@@ -14,18 +14,6 @@ var Cidjy = function( canvas ){
 	this.mouse = { 'x': undefined, 'y': undefined }
 	this.scaleRatio = 1;
 	this.fx = [];
-
-	/*this.snap = document.createElement('canvas');
-	this.snapCtx = this.snap.getContext('2d');
-	this.snap.id = "snap";
-	this.snap.width = this.canvas.width;
-	this.snap.height = this.canvas.height;
-	this.snap.style.zIndex = 90;
-	this.snap.style.borderColor = '#fff';
-	this.snap.style.borderSize = '3px';
-	this.snap.style.borderStyle = 'solid';
-
-	document.body.appendChild(this.snap);*/
 }
 
 Cidjy.prototype.enableMouse = function(){
@@ -75,40 +63,11 @@ Cidjy.prototype.screenshot = function(){
 }
 
 Cidjy.prototype.resize = function( width, height ){
-	// OPTION 1
-	// if (window.devicePixelRatio > 1) {
-	//     var canvasWidth = this.canvas.width;
-	//     var canvasHeight = this.canvas.height;
-
-	//     this.canvas.width = canvasWidth * window.devicePixelRatio;
-	//     this.canvas.height = canvasHeight * window.devicePixelRatio;
-	//     this.canvas.style.width = canvasWidth;
-	//     this.canvas.style.height = canvasHeight;
-
-	//     this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-	// }
-	// else{
-	// 	this.canvas.width = width;
-	// 	this.canvas.height = height;
-	// } dpr);
-
-	//OPTION2
-	// this.canvas.width = width;
-	// this.canvas.height = height;
-
-
-	// OPTION 3
 	var dpr = window.devicePixelRatio || 1;
-	// Get the size of the canvas in CSS pixels.
 	var rect = this.canvas.getBoundingClientRect();
-	// Give the canvas pixel dimensions of their CSS
-	// size * the device pixel ratio.
 	this.canvas.width = width * dpr;
 	this.canvas.height = height * dpr;
-	// Scale all drawing operations by the dpr, so you
-	// don't have to worry about the difference.
 	this.ctx.scale(dpr, dpr);
-
 }
 
 Cidjy.prototype.addChild = function( child ){
@@ -653,6 +612,7 @@ Cidjy.Sprite.prototype.nextFrame = function(){
 	else{
 		this.stop();
 	}
+	console.log('next', this.currentFrame)
 }
 Cidjy.Sprite.prototype.prevFrame = function(){
 	if( this.currentFrame > 0 ){
@@ -672,6 +632,8 @@ Cidjy.Sprite.prototype.render = function(){
 	else{
 		this.prevFrame();
 	}
+
+	this.img.x = -this.currentFrame * this.pWidth;
 }
 Cidjy.Sprite.prototype.play = function(){
 	var self = this;
