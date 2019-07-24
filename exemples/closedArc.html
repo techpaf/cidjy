@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cj;
+		var frame = 0;
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cj = new Cidjy( canvas );
+			cj.resize();	
+			cj.fullClear = true;
+
+			var a = new Cidjy.Arc(180, 270);
+			a.fill = "#f00";
+			a.x = window.innerWidth / 2;
+			a.y = window.innerHeight / 2;
+			a.closed = true;
+			cj.addChild(a);
+
+			bindEvents();
+
+			$(window).trigger('resize');
+
+			loop();
+		}
+
+		function bindEvents(){
+			$( window ).resize(function(){
+				cj.resize(window.innerWidth, window.innerHeight);
+				console.log('resize')
+			});
+		}
+
+		function loop(){
+			frame++;
+
+			requestAnimationFrame( loop );
+
+			cj.render();
+		}
+	</script>
+</body>
+</html>

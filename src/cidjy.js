@@ -333,6 +333,9 @@ Cidjy.prototype.drawRegularPolygon = function( obj ){
 
 Cidjy.prototype.drawArc = function( obj ){
 	this.ctx.beginPath();
+	if(obj.closed){
+		this.ctx.moveTo(0,0);
+	}
 	this.ctx.arc( 0, 0, obj.radius, Cidjy.degreeToRadian( obj.startAngle ),  Cidjy.degreeToRadian( obj.endAngle ), obj.antiClockwise );
 	this.ctx.closePath();
 }
