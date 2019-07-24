@@ -91,7 +91,7 @@
 			var height = h || Math.round(Math.random()*2 + 2);
 
 			var shape = [];
-			var computedShape = [];
+			var computedShape;
 
 			for(var i = 0; i < height; i++){
 				var rowLength = Math.round( Math.random() * (width-2) ) + 2;
@@ -99,10 +99,12 @@
 				shape.push(r);
 			}
 
-			for(var i = 0; i < shape.length; i++){
-				var r = shape[i];
-				var pr = shape[i-1];
-				var nr = shape[i+1];
+			computedShape = JSON.parse( JSON.stringify(shape) );
+
+			for(var i = 0; i < computedShape.length; i++){
+				var r = computedShape[i];
+				var pr = computedShape[i-1];
+				var nr = computedShape[i+1];
 
 				//Set starts
 				if(i == 0){
@@ -117,7 +119,7 @@
 						r.start = '1';
 					}
 				}
-				else if(i == shape.length-1){
+				else if(i == computedShape.length-1){
 					if(pr.offset > r.offset){
 						r.start = '1';
 					}
@@ -136,11 +138,22 @@
 					else if(pr.offset > r.offset && nr.offset < r.offset){
 						r.start = '4';
 					}
+					else if(pr.offset > r.offset && nr.offset == r.offset){
+						nr.offset++;
+						r.start = '3';
+					}
 					else if(pr.offset < r.offset && nr.offset > r.offset){
 						r.start = '3';
 					}
 					else if(pr.offset < r.offset && nr.offset < r.offset){
 						r.start = '2';
+					}
+					else if(pr.offset < r.offset && nr.offset == r.offset){
+						nr.offset++;
+						r.start = '3';
+					}
+					else{
+						console.log('nostart', i, pr.offset, r.offset, nr.offset)
 					}
 				}
 
@@ -157,7 +170,7 @@
 						r.end = '4';
 					}
 				}
-				else if(i == shape.length-1){
+				else if(i == computedShape.length-1){
 					if(pr.offset + pr.width > r.offset + r.width){
 						r.end = '3';
 					}
@@ -183,29 +196,28 @@
 						r.end = '1';
 					}
 				}
-
-
-
-
-				computedShape.push(r);
 			}
 
-			console.log(shape, computedShape);
+			console.log(computedShape);
 			return computedShape;
 		}
 
 		function renderShape(shape){
+			var s = new Cidjy.Group();
 			for(var i = 0; i < shape.length; i++){
 				var part = shape[i];
-				console.log(part);
 				if(part.width > 0){
 					var p = new Cidjy.Rectangle(part.width * brickSize, brickSize);
 					p.x = part.offset * brickSize + part.width*brickSize/2;
 					p.y = i * brickSize + brickSize/2;
 					p.fill = '#F00';
 					cj.addChild(p);
+					s.add(p);
 				}
 			}
+
+			s.x = window.innerWidth / 2 - shape[0].width*brickSize/2;
+			s.y = window.innerHeight / 2 - shape.length*brickSize/2;
 		}
 
 		function loop(){
