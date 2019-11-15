@@ -56,18 +56,22 @@ Cidjy.prototype.disableMouseStyle = function(){
 }
 
 Cidjy.prototype.screenshot = function(){
-	console.log('screen');
+	
 	var backupImage = new Image();
 	backupImage.src = this.canvas.toDataURL("image/png");
 	return backupImage;
 }
 
 Cidjy.prototype.resize = function( width, height ){
-	var dpr = window.devicePixelRatio || 1;
+	/*var dpr = window.devicePixelRatio || 1;
 	var rect = this.canvas.getBoundingClientRect();
 	this.canvas.width = width * dpr;
 	this.canvas.height = height * dpr;
-	this.ctx.scale(dpr, dpr);
+	this.ctx.scale(dpr, dpr);*/
+
+
+	this.canvas.width = width;
+	this.canvas.height = height;
 }
 
 Cidjy.prototype.addChild = function( child ){
@@ -128,7 +132,7 @@ Cidjy.prototype.swapChildIndex = function( childIndex, targetChildIndex ){
 }
 
 Cidjy.prototype.getMetName = function( root ){
-	console.log( this['drawRectangle'] );
+	
 }
 
 Cidjy.prototype.empty = function(){
@@ -615,7 +619,7 @@ Cidjy.Sprite.prototype.nextFrame = function(){
 	else{
 		this.stop();
 	}
-	console.log('next', this.currentFrame)
+	
 }
 Cidjy.Sprite.prototype.prevFrame = function(){
 	if( this.currentFrame > 0 ){
@@ -652,14 +656,14 @@ Cidjy.Sprite.prototype.stop = function(){
 	self.interval = undefined;
 }
 Cidjy.Sprite.prototype.gotoAndPlay = function( frame ){
-	if( frame > -1 && frame < this.frames-1 ){
+	if( frame > -1 && frame < this.frames ){
 		this.currentFrame = frame;
 		this.loop = false;
 		this.play();
 	}
 }
 Cidjy.Sprite.prototype.gotoAndStop = function( frame ){
-	if( frame > -1 && frame < this.frames-1 ){
+	if( frame > -1 && frame < this.frames ){
 		this.currentFrame = frame;
 		this.loop = false;
 		this.stop();
@@ -874,6 +878,12 @@ Cidjy.radianToDegree = function( radian ){
 	return radian * 180 / Math.PI;
 }
 
+
+
+/////////////////
+// CO9LLISIONS //
+/////////////////
+
 Cidjy.distanceBetween = function( p1, p2 ){
     var xs = 0;
     var ys = 0;
@@ -890,3 +900,184 @@ Cidjy.distanceBetween = function( p1, p2 ){
 Cidjy.pointInPolygon = function( poly, pt ){
     for(var c = false, i = -1, l = poly.length, j = l - 1; ++i < l; j = i) ((poly[i].y <= pt.y && pt.y < poly[j].y) || (poly[j].y <= pt.y && pt.y < poly[i].y)) && (pt.x < (poly[j].x - poly[i].x) * (pt.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x) && (c = !c); return c;
 }
+
+Cidjy.collisionRectCircle = function( rect, circle ){
+    var distX = Math.abs(circle.x - rect.x);
+    var distY = Math.abs(circle.y - rect.y);
+
+    if (distX > (rect.width/2 + circle.radius)) { return false; }
+    if (distY > (rect.height/2 + circle.radius)) { return false; }
+
+    if (distX <= (rect.width/2)) { return true; } 
+    if (distY <= (rect.height/2)) { return true; }
+
+    var dx=distX-rect.width/2;
+    var dy=distY-rect.height/2;
+    return (dx*dx+dy*dy<=(circle.radius*circle.radius));
+}
+
+Cidjy.collisionRectCircle2 = function( rect, circle ){
+    var enlagedRect = { width: rect.width + circle.radius*2, height: rect.height + circle.radius*2, x: rect.x, y: rect.y };
+
+    var colliding = Cidjy.collisionPointRect({x: circle.x, y: circle.y}, enlagedRect);
+    var colSide = null;
+
+    if(colliding){
+    	if(circle.y > rect.y && circle.x > rect.x - rect.width / 2 && circle.x < rect.x + rect.width / 2){
+    		colSide = 'bottom';
+    	}
+    	else if(circle.y < rect.y && circle.x > rect.x - rect.width / 2 && circle.x < rect.x + rect.width / 2){
+    		colSide = 'top';
+    	}
+    	else if(circle.x < rect.x && circle.y > rect.y - rect.height / 2 && circle.y < rect.y + rect.height / 2){
+    		colSide = 'left';
+    	}
+    	else if(circle.x > rect.x && circle.y > rect.y - rect.height / 2 && circle.y < rect.y + rect.height / 2){
+    		colSide = 'right';
+    	}
+    	else if(circle.y > rect.y && circle.x < rect.x - rect.width / 2){
+    		colSide = 'bottom-left';
+    	}
+    	else if(circle.y > rect.y && circle.x > rect.x + rect.width / 2){
+    		colSide = 'bottom-right';
+    	}
+    	else if(circle.y < rect.y && circle.x < rect.x - rect.width / 2){
+    		colSide = 'top-left';
+    	}
+    	else if(circle.y < rect.y && circle.x > rect.x + rect.width / 2){
+    		colSide = 'top-right';
+    	}
+    }
+
+    return {'collide': colliding, 'side': colSide};
+}
+
+Cidjy.collisionPointRect = function( point, rect ){
+	var collide = false;
+
+	if(point.x > rect.x - rect.width/2 && point.x < rect.x + rect.width/2 && point.y < rect.y + rect.height/2 && point.y > rect.y - rect.height / 2 ){
+    	collide = true;
+	}
+
+	return collide;
+}
+
+Cidjy.collisionCircleCircle = function( circle, circle2 ){
+    var dist = this.distanceBetween(circle, circle2)
+    return (dist<=circle.radius+circle2.radius);
+}
+
+Cidjy.collisionCircleLine = function( circle, p1, p2 ){
+	var x1 = p1.x;
+	var y1 = p1.y;
+	var x2 = p2.x;
+	var y2 = p2.y;
+	var xc = circle.x;
+	var yc = circle.y;
+	var rc = circle.radius;
+
+	var ac = [xc - x1, yc - y1];
+	var ab = [x2 - x1, y2 - y1];
+	var ab2 = Cidjy.dot(ab, ab);
+	var acab = Cidjy.dot(ac, ab);
+	var t = acab / ab2;
+	t = (t < 0) ? 0 : t;
+	t = (t > 1) ? 1 : t;
+	var h = [(ab[0] * t + x1) - xc, (ab[1] * t + y1) - yc];
+	var h2 = Cidjy.dot(h, h);
+	return h2 <= rc * rc;
+}
+
+
+
+Cidjy.dot = function( v1, v2 ){
+	return (v1[0] * v2[0]) + (v1[1] * v2[1]);
+}
+
+
+
+////////////
+// COLORS //
+////////////
+
+Cidjy.randomColor = function(){
+	var glyph = '0123456789ABCDEF'.split('');
+    var color = '#';
+    for( var i = 0; i < 6; i++ ){
+        color += glyph[ Math.round( Math.random() * 15 ) ];
+    }
+    return color;
+}
+
+Cidjy.randomColorFromScheme = function( scheme ){
+	var color = Cidjy.scheme[ scheme ][ Math.round( Math.random()*(Cidjy.scheme[ scheme ].length-1 ) ) ];
+    return color;
+}
+
+Cidjy.changeColorLuminance = function( hexa, luminance ){
+	hexa = String(hexa).replace(/[^0-9a-f]/gi, '');
+	if( hexa.length < 6 ){
+		hexa = hexa[0] + hexa[0] + hexa[1] + hexa[1] + hexa[2] + hexa[2];
+	}
+	luminance = luminance || 0;
+
+	var rgb = "#", c, i;
+	for( i = 0; i < 3; i++ ){
+		c = parseInt( hexa.substr( i * 2 , 2 ), 16 );
+		c = Math.round( Math.min( Math.max( 0, c + ( c * luminance ) ), 255 ) ).toString( 16 );
+		rgb += ( "00"+c ).substr( c.length );
+	}
+
+	return rgb;
+}
+
+//HEX TO RGB & RGB TO HEX | credits Tim Down http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+Cidjy.hexToRgb = function( hex ){
+    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace( shorthandRegex, function( m, r, g, b ){
+        return r + r + g + g + b + b;
+    } );
+
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec( hex );
+    return result ? {
+        r: parseInt( result[1], 16 ),
+        g: parseInt( result[2], 16 ),
+        b: parseInt( result[3], 16 )
+    } : null;
+}
+
+Cidjy.componentToHex = function( c ){
+    var hex = c.toString( 16 );
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+Cidjy.rgbToHex = function( r, g, b ){
+    return "#" + this.componentToHex(r) + this.componentToHex(g) + this.componentToHex(b);
+}
+
+Cidjy.getPixelColor = function( canvas, x, y ){
+    var imgData = canvas.getContext('2d').getImageData(x, y, 1, 1);
+    var red = imgData.data[0];
+    var green = imgData.data[1];
+    var blue = imgData.data[2];
+    var alpha = imgData.data[3];
+    return Cidjy.rgbToHex( red, green, blue );
+}
+
+
+
+//////////////////
+// COLOR SCHEME //
+//////////////////
+
+Cidjy.scheme = {};
+Cidjy.scheme.beach = [ '#FFD946', '#F9C74B', '#2996C1', '#268DA5', '#FFFFFF' ];
+Cidjy.scheme.bert = [ '#F0EDE6', '#95BFB8', '#63A497', '#332936', '#DCD5C1' ];
+Cidjy.scheme.breizh = [ '#275D8C', '#0578A6', '#15A0BF', '#BFB1A8', '#F2D5C4' ];
+Cidjy.scheme.cake = [ '#BF3B58', '#5B3349', '#F4C284', '#F5A286', '#F06363' ];
+Cidjy.scheme.dawn = [ '#A49294', '#282240', '#2E2759', '#323073', '#BF5F56' ];
+Cidjy.scheme.irland = [ '#005572', '#006573', '#008B8D', '#81BEAA', '#F4D4AD' ];
+Cidjy.scheme.mint = [ '#005B4F', '#157362', '#61A486', '#92D7B2', '#C3F4D0' ];
+Cidjy.scheme.nebula = [ '#D99F00', '#D92B4B', '#040740', '#010626', '#0596A6', '#0BD9C4' ];
+Cidjy.scheme.patriot = [ '#BF3542', '#CDC5BA', '#EBE3D6', '#1F2A3C', '#2E2E2E' ];
+Cidjy.scheme.volcano = [ '#D6D0D9', '#252622', '#F27B35', '#F2622E', '#F2522E' ];
