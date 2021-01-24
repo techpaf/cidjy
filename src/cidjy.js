@@ -1068,6 +1068,94 @@ Cidjy.getPixelColor = function( canvas, x, y ){
 
 
 
+////////////
+// LazyME //
+////////////
+
+Cidjy.Spawn = function( opt ){
+    return new LazyCJ(opt);
+}
+
+var LazyCJ = function(opt){
+	var defaultOptions = {
+		w: window.innerWidth,
+		h: window.innerWidth / 16 * 9,
+		fullClear: true,
+		clearColor: "rgba(255,255,255,0.025)",
+		callbacks: {
+			init: function(){
+				console.log("Default init callback");
+			},
+			resize: function(){
+				console.log("Default resize callback");
+			},
+			render: function(){
+				console.log("Default render callback");
+			}
+		},
+		animated: false
+	}
+	var options = opt || defaultOptions;
+
+	this.canvas = options.canvas;
+
+	this.cj = new Cidjy(this.canvas);
+	this.cj.fullClear = options.fullClear;
+	this.cj.clearColor = options.clearColor || defaultOptions.clearColor;
+	this.cWidth = options.w || defaultOptions.w;
+	this.cHeight = options.h || defaultOptions.h;
+	this.callBacks = { 
+		'init': (options.callBacks && options.callBacks.init)?options.callBacks.init : defaultOptions.callbacks.init,
+		'resize': (options.callBacks && options.callBacks.resize)?options.callBacks.resize : defaultOptions.callbacks.resize,
+		'render': (options.callBacks && options.callBacks.render)?options.callBacks.render : defaultOptions.callbacks.render
+	};
+	this.animated = options.animated || defaultOptions.animated;
+
+	this.init();
+}
+
+LazyCJ.prototype.init = function(){
+	this.resize(this.cWidth, this.cHeight);	
+
+	if(this.animated){
+	   this.loop();
+	}
+	else{
+		this.render()
+	}
+
+	this.callBacks.init(this);
+}
+
+LazyCJ.prototype.render = function(){
+	this.callBacks.render(this);
+	this.cj.render();
+}
+
+LazyCJ.prototype.resize = function(w, h){
+	console.log("lazy resize")
+	this.cWidth = w;
+	this.cHeight = h;
+	this.cj.resize(this.cWidth, this.cHeight);
+	
+	this.callBacks.resize(this);
+	
+	this.render();
+}
+
+LazyCJ.prototype.loop = function(){
+	var self = this;
+
+	requestAnimationFrame( function(){
+		self.loop();
+	});
+
+	this.render();
+	this.cj.render();
+}
+
+
+
 //////////////////
 // COLOR SCHEME //
 //////////////////

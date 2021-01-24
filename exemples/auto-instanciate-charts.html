@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+			background: #333;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+			background: #fff;
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var autocj;
+		var graphDatas = [
+			{ value: 10 },
+			{ value: 7 },
+			{ value: 5 },
+			{ value: 5 },
+			{ value: 5 },
+			{ value: 10 }
+		];
+		var barWidth = 35;
+
+		$(document).ready(function(){			
+			autocj = new Cidjy.Spawn({
+				canvas : $("#cidjy")[0],
+				animated: false,
+				fullClear: false,
+				clearColor: "rgba(255,255,255,0.25)",
+				callBacks: {
+					init: function(instance){
+						var spaceBetweenBar = instance.cj.canvas.width / (graphDatas.length+1);
+						var maxDataValue = -271088;
+						var maxValue;
+
+						for(var i in graphDatas){
+							if(graphDatas[i]["value"] > maxDataValue){
+							   maxDataValue = graphDatas[i]["value"];
+							}
+						}			
+
+						maxValue = maxDataValue * 1.5;
+
+						for(var i in graphDatas){
+							var bar = new Cidjy.Rectangle(barWidth, graphDatas[i]["value"] / maxValue * instance.cj.canvas.height);
+							bar.fill = Cidjy.randomColorFromScheme('nebula');
+							bar.x = spaceBetweenBar + spaceBetweenBar * i;
+							bar.y = instance.cj.canvas.height - bar.height/2;
+							instance.cj.addChild(bar);
+
+							var tv = new Cidjy.Text(graphDatas[i]["value"], { fontStyle: "bold" });
+							tv.fill = "#000";
+							tv.x = spaceBetweenBar + spaceBetweenBar * i;
+							tv.y = instance.cj.canvas.height - (graphDatas[i]["value"] / maxValue) * instance.cj.canvas.height - 10;
+							instance.cj.addChild(tv);
+						}
+					}
+				}
+			});
+		});
+	</script>
+</body>
+</html>

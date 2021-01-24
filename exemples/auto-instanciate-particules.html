@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+			background: #333;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+			background: #fff;
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var lcj;
+		var particules = [];
+		var maxParticules = 101;
+		var pVel = 7;
+
+		$(document).ready(function(){			
+			lcj = new LazyCJ({
+				canvas : $("#cidjy")[0],
+				animated: true,
+				fullClear: false,
+				clearColor: "rgba(255,255,255,0.25)",
+				callBacks: {
+					init: function(instance){
+						for(var i = 0; i < maxParticules; i++){
+							var p = new Cidjy.Circle(5);
+							p.fill = Cidjy.randomColorFromScheme('nebula');
+							p.x = instance.cj.canvas.width/2;
+							p.y = instance.cj.canvas.height/2;
+							p.vel = { 
+								x: (Math.random() * pVel * 2)-pVel,
+								y: (Math.random() * pVel * 2)-pVel
+							};
+							instance.cj.addChild(p);
+							particules.push(p);
+						}
+					},
+					render: function(instance){						
+						for(p in particules){
+							var cp = particules[p];
+							cp.x += cp.vel.x;
+							cp.y += cp.vel.y;
+							
+							if(cp.x < -cp.radius || p.x > instance.cj.canvas.width + cp.radius || cp.y < -cp.radius || cp.y > instance.cj.canvas.height + cp.radius){
+								cp.x = instance.cj.canvas.width/2;
+								cp.y = instance.cj.canvas.height/2;
+								cp.vel = { 
+									x: (Math.random() * pVel * 2)-pVel,
+									y: (Math.random() * pVel * 2)-pVel
+								};
+						   	}
+							
+							/*if(cp.x < -cp.radius){
+								console.log("outX", instance.cj.canvas.width + cp.radius)
+							   	cp.x = instance.cj.canvas.width + cp.radius
+						   	}
+							else if(p.x > instance.cj.canvas.width + cp.radius){
+							   cp.x = -cp.radius;
+						   	}
+							
+							if(cp.y < -cp.radius){
+							   cp.y = instance.cj.canvas.height + cp.radius
+						   	}
+							else if(cp.y > instance.cj.canvas.height + cp.radius){
+							   cp.y = -cp.radius;
+						   	}*/
+						}
+					}
+				}
+			});
+		});
+	</script>
+</body>
+</html>
