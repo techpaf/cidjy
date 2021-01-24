@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+			background: #333;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+			background: #fff;
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	<script src="../src/LazyCJ.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var lcj;
+
+		$(document).ready(function(){			
+			lcj = new LazyCJ({
+				canvas : $("#cidjy")[0],
+				callBacks: {
+					init: function(instance){
+						instance.dummy = new Cidjy.Rectangle(150, 150);
+						instance.dummy.fill = "#0BD9C4";
+						instance.dummy.x = instance.cj.canvas.width/2;
+						instance.dummy.y = instance.cj.canvas.height/2;
+						instance.cj.addChild(instance.dummy);
+						
+						instance.text = new Cidjy.Text("Cidjy", { fontStyle: "bold", fontSize: "16px" });
+						instance.text.fill = "#fff";
+						instance.text.x = instance.cj.canvas.width/2;
+						instance.text.y = instance.cj.canvas.height/2 + 15;
+						instance.cj.addChild(instance.text);
+					},
+					render: function(instance){						
+						instance.dummy.scaleX = Math.cos(new Date().getTime()/500) + 2;
+						instance.dummy.scaleY = instance.dummy.scaleX;
+						instance.dummy.rotation += 3;			
+						instance.dummy.x = instance.cj.canvas.width/2;
+						instance.dummy.y = instance.cj.canvas.height/2;	
+						
+						instance.text.scaleX = 1+ -Math.cos(new Date().getTime()/500) + 2;
+						instance.text.scaleY = instance.text.scaleX;
+						instance.text.x = instance.cj.canvas.width/2;
+						instance.text.y = instance.cj.canvas.height/2 + 15;
+					}
+				},
+				animated: true
+			});
+		});
+	</script>
+</body>
+</html>
