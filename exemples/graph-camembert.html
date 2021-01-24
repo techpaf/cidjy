@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+			background: #333;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+			background: #fff;
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cj;
+		var frame = 0;
+		var cWidth = 550;
+		var cHeight = cWidth / 16 * 9;
+		
+		var graphDatas = [
+			{ value: 1, color: Cidjy.randomColorFromScheme('nebula') },
+			{ value: 2, color: Cidjy.randomColorFromScheme('nebula') },
+			{ value: 3, color: Cidjy.randomColorFromScheme('nebula') },
+			{ value: 2, color: Cidjy.randomColorFromScheme('nebula') }
+		];
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cj = new Cidjy( canvas );
+			cj.resize();
+
+			bindEvents();
+
+			$(window).trigger('resize');
+			
+			drawBarGraph();
+
+			//loop();
+
+			cj.render();
+		}
+
+		function bindEvents(){
+			$( window ).resize(function(){
+				cj.resize(cWidth, cHeight);
+				console.log('resize')
+			});
+		}
+		
+		function drawBarGraph(){
+			var totalValues = 0;
+			
+			for(var i in graphDatas){
+				totalValues += graphDatas[i]["value"];
+			}
+			
+			var multiplyer = 360/totalValues;
+			var lastAngle = 0;
+			
+			for(var i in graphDatas){
+				var a = new Cidjy.Arc(lastAngle, Math.round(lastAngle + graphDatas[i]["value"] * multiplyer), cj.canvas.height * 0.35);
+				a.fill = graphDatas[i]["color"];
+				a.stroke = "#fff";
+				a.strokeWidth = 2;
+				a.x = cj.canvas.width / 2;
+				a.y = cj.canvas.height / 2;
+				a.closed = true;
+				cj.addChild(a);
+				lastAngle = Math.round(lastAngle + graphDatas[i]["value"] * multiplyer);
+			}
+		}
+
+		function loop(){
+			frame++;
+			requestAnimationFrame( loop );
+
+			console.log("loop")
+
+			cj.render();
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cj;
+		var frame = 0;
+		var cWidth = window.innerWidth;
+		var cHeight = window.innerHeight;
+		
+		var circleDatas = [
+		];
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cj = new Cidjy( canvas );
+			cj.resize();
+
+			bindEvents();
+
+			$(window).trigger('resize');
+			
+			generateTheKindOfCoolCircle();
+
+			//loop();
+
+			cj.render();
+		}
+
+		function bindEvents(){
+			$( window ).resize(function(){
+				cj.resize(cWidth, cHeight);
+				console.log('resize')
+			});
+		}
+		
+		function generateTheKindOfCoolCircle(){
+			var numberOfPart = 1 + Math.round(Math.random() * 11);
+			
+			for(var i = 0; i < numberOfPart; i++){
+				circleDatas.push({ value: Math.round(Math.random()*50), color: Cidjy.randomColorFromScheme('nebula') });
+			}
+			
+			var totalValues = 0;
+			
+			for(var i in circleDatas){
+				totalValues += circleDatas[i]["value"];
+			}
+			
+			var multiplyer = 360/totalValues;
+			var lastAngle = 0;
+			
+			for(var i in circleDatas){
+				var a = new Cidjy.Arc(lastAngle, Math.round(lastAngle + circleDatas[i]["value"] * multiplyer), window.innerHeight * 0.25);
+				a.fill = circleDatas[i]["color"];
+				a.stroke = "#000";
+				a.strokeWidth = 1;
+				a.x = cj.canvas.width / 2;
+				a.y = cj.canvas.height / 2;
+				a.closed = false;
+				cj.addChild(a);
+				lastAngle = Math.round(lastAngle + circleDatas[i]["value"] * multiplyer);
+			}
+		}
+
+		function loop(){
+			frame++;
+			requestAnimationFrame( loop );
+
+			console.log("loop")
+
+			cj.render();
+		}
+	</script>
+</body>
+</html>

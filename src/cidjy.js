@@ -353,10 +353,12 @@ Cidjy.prototype.drawSprite = function( obj ){
 }
 
 Cidjy.prototype.drawText = function( obj ){
+	this.ctx.beginPath();
 	this.ctx.fillStyle = obj.fill;
 	this.ctx.font = obj.fontStyle + ' ' + obj.fontSize + ' ' + obj.fontFamily;
 	this.ctx.textAlign = obj.textAlign;
 	this.ctx.fillText( obj.txt, 0, 0 );
+	this.ctx.closePath();
 }
 
 

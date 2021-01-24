@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cidjy Exemple</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+			background: #333;
+		}
+
+		*{
+			box-sizing: border-box;
+		}
+
+		canvas{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+			background: #fff;
+		}
+	</style>
+</head>
+<body>
+	<!-- The canvas we will draw on -->
+	<canvas id="cidjy"></canvas>
+
+	<!-- Loading some libs & cidjy -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="../src/cidjy.js"></script>
+	
+	<!-- Exemple code -->
+	<script>
+		var canvas, cj;
+		var frame = 0;
+		var cWidth = 550;
+		var cHeight = cWidth / 16 * 9;
+		
+		var graphDatas = [
+			{ value: 10 },
+			{ value: 7 },
+			{ value: 5 },
+			{ value: 10 },
+			{ value: 3 },
+			{ value: 10 },
+			{ value: 7 },
+			{ value: 10 },
+			{ value: 3 },
+			{ value: 10 },
+			{ value: 7 }
+		];
+		
+		var barWidth = 35;
+
+		$(document).ready(function(){
+			init();
+		});
+
+		function init(){			
+			canvas = $('#cidjy')[0];
+			cj = new Cidjy( canvas );
+			cj.resize();
+
+			bindEvents();
+
+			$(window).trigger('resize');
+			
+			drawBarGraph();
+
+			//loop();
+
+			cj.render();
+		}
+
+		function bindEvents(){
+			$( window ).resize(function(){
+				cj.resize(cWidth, cHeight);
+				console.log('resize')
+			});
+		}
+		
+		function drawBarGraph(){
+			var spaceBetweenBar = cj.canvas.width / (graphDatas.length+1);
+			var maxDataValue = -271088;
+			var maxValue;
+			
+			for(var i in graphDatas){
+				if(graphDatas[i]["value"] > maxDataValue){
+				   maxDataValue = graphDatas[i]["value"];
+			   	}
+			}			
+			
+			maxValue = maxDataValue * 1.5;
+			
+			var points = [
+				{x: 0, y: cj.canvas.height}
+			];
+			
+			for(var i in graphDatas){
+				points.push({ x: spaceBetweenBar + spaceBetweenBar * i, y: cj.canvas.height - (graphDatas[i]["value"] / maxValue * cj.canvas.height) });
+				
+				//graphDatas[i]["value"] / maxValue * cj.canvas.height
+				
+				
+				var tv = new Cidjy.Text(graphDatas[i]["value"], { fontStyle: "bold" });
+				tv.fill = "#000";
+				tv.x = spaceBetweenBar + spaceBetweenBar * i;
+				tv.y = cj.canvas.height - (graphDatas[i]["value"] / maxValue) * cj.canvas.height - 15;
+				cj.addChild(tv);
+			}
+			
+			points.push({x: cj.canvas.width, y: cj.canvas.height});
+			
+			var p = new Cidjy.Path(points);
+			p.stroke = Cidjy.randomColorFromScheme('nebula');
+			
+			cj.addChild( p );
+			cj.sendToBack(p);
+		}
+
+		function loop(){
+			frame++;
+			requestAnimationFrame( loop );
+
+			console.log("loop")
+
+			cj.render();
+		}
+	</script>
+</body>
+</html>
