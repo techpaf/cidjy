@@ -1,2 +1,2 @@
 # cidjy
-CG tool for canvas / 2d
+👾 CG tool for canvas / 2d
